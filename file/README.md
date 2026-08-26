@@ -23,7 +23,6 @@
 - [13. 配置体系](#13-配置体系)
 - [14. API 接口](#14-api-接口)
 - [15. 故障排查](#15-故障排查)
-- [16. RAG 评测（Ragas）](#16-rag-评测ragas)
 - [附录：项目文件速查表](#附录项目文件速查表)
 
 ---
@@ -207,13 +206,6 @@ RAG/
 │       ├── styles/global.css # 设计令牌（CSS 变量，亮暗主题）
 │       ├── views/            # ChatView.vue（主界面）/ McpView.vue（MCP 管理）
 │       └── components/       # chat/（消息/思考/工作台/引用）+ panel/（右侧面板）+ mcp/
-├── eval/                     # RAG 评测框架（Ragas，独立于主程序，见第 16 章）
-│   ├── config.py             # 组合矩阵 + 指标清单 + judge 模型配置
-│   ├── generate_dataset.py   # 评测集生成（LLM 生成 QA 对）
-│   ├── collect.py            # 组合遍历采集（answer + contexts）
-│   ├── score.py              # Ragas 评分（5 指标，独立 venv 运行）
-│   ├── report.py             # 汇总报告
-│   └── data/                 # dataset.json / runs/ / scores/ / report.md
 ├── config/
 │   ├── config.json          # 系统配置
 │   ├── models.json          # 模型配置（llm/tool_llm/summary/embedding/reranker）
@@ -1327,129 +1319,6 @@ python __main__.py --mcp --celery    # 三个服务一起启停
 
 ---
 
-## 16. RAG 评测（Ragas）
-
-这一节介绍如何**量化评估**本系统的检索质量与生成质量——回答两个核心问题：「检索是不是把该找的都找出来了（召回率）？」「模型有没有一本正经地胡说八道（幻觉）？」。
-
-### 16.1 为什么要评测、评什么
-
-RAG 的质量可以拆成两条独立维度，分别对应两类典型问题：
-
-| 关注点 | 典型症状 | 对应指标 |
-|---|---|---|
-| **召回精度** | 文档里明明有答案，却答不出来；或检索混入无关噪声 | Context Recall（召回率）、Context Precision（精度） |
-| **推理准确率** | 答案「一本正经地胡说八道」 | Faithfulness（忠实度） |
-
-本系统用 [Ragas](https://github.com/explodinggradients/ragas)（RAG Assessment）框架做自动化评测。Ragas 的核心思路是 **LLM-as-Judge（用大模型当裁判）**：把「答案是否忠实」「检索是否覆盖了答案所需信息」这类主观判断交给一个 LLM 打分，从而可规模化、可复现。
-
-### 16.2 指标说明
-
-| 指标 | 衡量什么 | 需要标准答案 | 对应问题 |
-|---|---|---|---|
-| **Faithfulness（忠实度）** | 答案有多少能被检索上下文支撑 | ❌ | **幻觉**：分数越低，编造越多 |
-| **Context Recall（上下文召回率）** | 标准答案的关键信息，检索覆盖了多少 | ✅ | **漏检**：检索没找到关键片段 |
-| **Context Precision（上下文精度）** | 检索片段里相关占比 + 相关片段是否排前 | ✅ | **噪声/排序**：混入无关、或相关被埋后面 |
-| **Answer Relevancy（答案相关性）** | 答案是否切题、有无冗余 | ❌ | 答非所问、跑题 |
-| **Answer Correctness（正确性）** | 答案与标准答案语义+事实一致度 | ✅ | 端到端对错 |
-
-> **指标组合看**：只优化 Recall 会把 `top_k` 拉大 → Precision 崩 → 噪声多 → Faithfulness 反而降。所以要三者一起看。Ragas 的价值是**定位该改哪一环**（检索/重排/切分/生成提示词），而非追求绝对分数。
-
-### 16.3 评测框架结构（eval/）
-
-评测代码全部在 `eval/` 目录，**独立于主程序**，不污染运行环境：
-
-```
-eval/
-├── config.py           # 组合矩阵 + 指标清单 + 模型配置读取（两个环境通用）
-├── generate_dataset.py # 评测集生成（LLM 从文档生成 QA 对）
-├── collect.py          # 组合遍历采集（跑 pipeline，采集 answer + contexts）
-├── score.py            # Ragas 评分（5 指标）
-├── report.py           # 汇总报告（组合 × 指标矩阵 + 维度对比）
-└── data/
-    ├── dataset.json    # 评测集（20 题 QA 对）
-    ├── runs/           # 采集结果 {combo_id}.json
-    ├── scores/         # 评分结果 {combo_id}.json
-    └── report.md       # 最终报告
-```
-
-**为什么拆两个环境**：主程序锁 `openai>=3.0.0`，而 ragas 依赖的 `instructor` 要求 `openai<3.0.0`，二者冲突。故采集在**主 poetry 环境**跑（复用 `server.py` / `rag_graph.py`），评分在**独立 venv**（`eval/.venv`）跑，中间用 JSON 文件交接。
-
-### 16.4 组合矩阵（排列组合）
-
-从代码确认，各维度对三种模式的作用范围不同：
-
-| 维度 | 取值 | direct | rag | agentic |
-|---|---|---|---|---|
-| `mode` | direct / rag / agentic | — | — | — |
-| `retrieval_mode` | vector / hybrid / tree | ✗ | ✓ | ✓ |
-| `rewrite`（查询改写） | on / off | ✗ | ✓ | ✗ |
-| `tool_calling`（工具调用） | on / off | ✗ | ✓ | ✗ |
-| `websearch`（联网） | on / off | ✗ | ✓ | ✓ |
-
-**组合总数 = 1（direct）+ 24（rag）+ 6（agentic）= 31 种**（见 `eval/config.py` 的 `COMBINATIONS`）。全量成本高，故内置「检索模式对比」子集（6 组，纯净对比 vector/hybrid/tree，关闭 rewrite/tool/websearch 避免干扰归因）：
-
-```python
-# eval/config.py → MODE_COMPARISON_IDS
-["rag_vector_rw0_tc0_ws0", "rag_hybrid_rw0_tc0_ws0", "rag_tree_rw0_tc0_ws0",
- "agentic_vector_ws0", "agentic_hybrid_ws0", "agentic_tree_ws0"]
-```
-
-### 16.5 评测流程（三步）
-
-```powershell
-# ① 生成评测集（20 题：每篇 5 题 + 5 题跨文档）
-poetry run python eval/generate_dataset.py
-
-# ② 采集：跑 pipeline，采集 answer + contexts（断点续跑，每题落盘）
-poetry run python eval/collect.py --subset mode-comparison
-
-# ③ 评分：Ragas 5 指标（eval 独立 venv）
-eval/.venv/Scripts/python eval/score.py --subset mode-comparison
-
-# ④ 汇总报告
-poetry run python eval/report.py
-```
-
-常用参数：
-
-| 脚本 | 参数 | 说明 |
-|---|---|---|
-| `collect.py` | `--subset all\|mode-comparison` | 组合子集 |
-| | `--combo <id>` | 只跑单个组合 |
-| | `--limit N` | 每个组合只跑前 N 题（冒烟测试） |
-| | `--refresh` | 忽略已有结果重跑 |
-| `score.py` | `--subset` / `--combo` / `--limit` | 同上 |
-
-报告 `eval/data/report.md` 输出：各模式「组合 × 指标」矩阵 + 按维度分组的对比表（rag/agentic 分开），直接回答「哪种检索模式召回精度更高、哪种幻觉更少」。
-
-### 16.6 独立 venv 搭建（评分环境）
-
-ragas 装不进主 poetry 环境（openai 版本冲突），需单独建 venv：
-
-```powershell
-python -m venv eval/.venv
-eval/.venv/Scripts/python -m pip install ragas
-# ragas 0.4.3 默认拉 langchain-community 0.4.x 会 import 失败，需降级：
-eval/.venv/Scripts/python -m pip install "langchain-community<0.4.0"
-```
-
-### 16.7 关键配置与经验
-
-**judge 模型必须用非 reasoning 模型**：ragas 的 `evaluate` 只接受旧版指标（`ragas.metrics._xxx`），judge 通过 `llm_factory` 走 instructor 结构化输出。若用 reasoning 模型（如 DeepSeek V4 Pro），thinking 无法禁用，`faithfulness` / `answer_correctness` 会因复杂 JSON 生成超时/不完整。本评测 judge 固定用 `deepseek-ai/DeepSeek-V3.2`（非 reasoning），配置见 `eval/config.py` 的 `JUDGE_MODEL`。
-
-**两个必踩的坑**（已在 `eval/score.py` 修好）：
-
-| 坑 | 现象 | 修复 |
-|---|---|---|
-| `max_tokens` 默认 1024 | faithfulness/correctness 的复杂 JSON 被截断 → `IncompleteOutputException` | `llm_factory(..., max_tokens=4096)` |
-| `timeout` 默认 180s | answer_correctness 大 JSON 生成超时 | `RunConfig(timeout=600)` |
-
-**换 embedding 必须重新入库**：现有知识库是用**特定 embedding 模型**向量化入库的，换模型（即使维度相同）会导致 query 向量与 chunk 向量不在同一语义空间，检索完全失效。换 embedding 前需先清空并重新入库（`db_service.clear_all()` 后重新 `ingest_file`）。本评测的 embedding 与主程序保持一致（`config/models.json` 的 `embedding`）。
-
-**评测集质量决定上限**：Context Recall / Precision / Correctness 三个指标需要标准答案（ground_truth）。本项目用 LLM 从文档 chunk 自动生成 QA 对（`generate_dataset.py`），标准答案与文档内容强一致，但终究是「近似」，追求绝对分数意义有限——Ragas 更适合做**横向对比**（改切分/换 embedding/调检索模式前后）。
-
----
-
 ## 附录：项目文件速查表
 
 | 文件 | 一句话职责 |
@@ -1476,4 +1345,3 @@ eval/.venv/Scripts/python -m pip install "langchain-community<0.4.0"
 | `common/text_utils.py` | 通用文本工具（健壮 JSON 解析 / CJK 检测 / 查询英化） |
 | `agentic_rag/` | Agentic RAG 子包（多步检索循环） |
 | `mcp_service/` | MCP 服务子包（工具 + 管理 + 桥接） |
-| `eval/` | RAG 评测框架（Ragas，组合遍历采集 + 评分 + 报告，见第 16 章） |

@@ -8,8 +8,13 @@ env/
 
 # ============ Runtime data (local DB / uploads / logs / task state) ============
 milvus/
-data/
+/data/
 models/
+
+# ============ eval 运行时产物（评测集 dataset.json 保留入库） ============
+eval/data/runs/
+eval/data/scores/
+eval/data/report.md
 
 # ============ Frontend ============
 frontend/node_modules/
