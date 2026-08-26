@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { ScrollText, RefreshCw, Trash2 } from '@lucide/vue'
 import { useSettingsStore } from '../../stores/settings'
+import CollapsibleCard from './CollapsibleCard.vue'
 
 const settings = useSettingsStore()
 const following = ref(true)
@@ -50,17 +51,15 @@ function clear() {
 </script>
 
 <template>
-  <div class="log-panel">
-    <div class="panel-head">
-      <div class="panel-title"><ScrollText :size="15" /> 服务日志</div>
-      <div class="head-actions">
-        <span class="follow" :class="{ on: following }" @click="following = !following" title="点击切换自动滚动">
-          {{ following ? '跟随' : '不跟随' }}
-        </span>
-        <button class="icon-btn" title="清空显示" @click="clear"><Trash2 :size="14" /></button>
-        <button class="icon-btn" title="刷新" @click="refresh"><RefreshCw :size="14" /></button>
-      </div>
-    </div>
+  <CollapsibleCard title="服务日志" persist-key="log">
+    <template #icon><ScrollText :size="15" /></template>
+    <template #actions>
+      <span class="follow" :class="{ on: following }" @click="following = !following" title="点击切换自动滚动">
+        {{ following ? '跟随' : '不跟随' }}
+      </span>
+      <button class="icon-btn" title="清空显示" @click="clear"><Trash2 :size="14" /></button>
+      <button class="icon-btn" title="刷新" @click="refresh"><RefreshCw :size="14" /></button>
+    </template>
     <div ref="boxEl" class="log-box" @scroll="onScroll">
       <div v-if="!logs.length" class="log-empty">暂无日志</div>
       <div v-for="(l, i) in logs" :key="i" class="log-line">
@@ -69,34 +68,10 @@ function clear() {
         <span class="log-msg">{{ l.msg }}</span>
       </div>
     </div>
-  </div>
+  </CollapsibleCard>
 </template>
 
 <style scoped>
-.log-panel {
-  display: flex;
-  flex-direction: column;
-  margin: 0 16px 16px;
-  background: var(--panel-sub-bg);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  overflow: hidden;
-}
-.panel-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
-}
-.panel-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 600;
-  font-size: 14px;
-  color: var(--text);
-}
 .head-actions {
   display: flex;
   align-items: center;

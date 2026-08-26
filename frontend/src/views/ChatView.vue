@@ -1,7 +1,9 @@
 <script setup>
 import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { Sparkles, SunMoon, Blocks, Settings2 } from '@lucide/vue'
+import {
+  Sparkles, SunMoon, Blocks, Settings2, MessageSquarePlus,
+} from '@lucide/vue'
 import { useThemeStore } from '../stores/theme'
 import { useChatStore } from '../stores/chat'
 import { useSettingsStore } from '../stores/settings'
@@ -23,6 +25,13 @@ const settings = useSettingsStore()
 const upload = useUploadStore()
 
 const messagesEl = ref(null)
+
+// 空状态快捷提问
+const quickPrompts = [
+  '介绍一下这个知识库',
+  '帮我检索最近的知识点',
+  '总结上传文档的核心内容',
+]
 
 // 智能滚动：仅当用户接近底部时才跟随
 function scrollToBottomIfNear() {
@@ -76,6 +85,7 @@ onUnmounted(() => {
       <div class="header-title">
         <span class="logo"><Sparkles :size="20" color="#fff" /></span>
         <h1>RAG 知识库</h1>
+        <span class="header-sub">检索增强生成 · Agentic</span>
       </div>
       <div class="header-actions">
         <span class="status-dot" :class="settings.health.db_available ? 'ok' : 'err'">
@@ -103,8 +113,25 @@ onUnmounted(() => {
             <div class="chat-header"><span>对话</span></div>
             <div class="chat-content">
               <div ref="messagesEl" class="chat-messages">
-                <div v-if="!chat.messages.length" class="msg msg-system">
-                  欢迎使用 RAG 知识库！点击左侧「新建对话」开始。
+                <div v-if="!chat.messages.length" class="welcome">
+                  <div class="welcome-orbit">
+                    <span class="welcome-logo"><Sparkles :size="30" color="#fff" /></span>
+                    <span class="orbit-dot d1"></span>
+                    <span class="orbit-dot d2"></span>
+                    <span class="orbit-dot d3"></span>
+                  </div>
+                  <h2>你好，我是你的知识库助手</h2>
+                  <p>基于检索增强生成（RAG），从你的文档中给出可信、可溯源的答案。</p>
+                  <div class="welcome-actions">
+                    <button
+                      v-for="q in quickPrompts"
+                      :key="q"
+                      class="welcome-chip"
+                      @click="chat.send(q)"
+                    >
+                      <MessageSquarePlus :size="14" /><span>{{ q }}</span>
+                    </button>
+                  </div>
                 </div>
                 <MessageItem
                   v-for="(m, i) in chat.messages"
@@ -144,19 +171,43 @@ onUnmounted(() => {
   min-height: 0;
 }
 .app-header {
-  background: linear-gradient(135deg, var(--header-bg) 0%, #2f2b57 60%, #4338a6 140%);
+  position: relative;
+  background: linear-gradient(135deg, #1f1b4a 0%, #2f2b57 55%, #4c3fa0 130%);
   color: var(--header-text);
   padding: 16px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-shrink: 0;
-  box-shadow: 0 3px 18px rgba(0, 0, 0, 0.14);
+  box-shadow: 0 3px 20px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+}
+/* 顶栏玻璃高光：柔和光斑 + 顶部细亮边 */
+.app-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(420px 160px at 18% 0%, rgba(139, 92, 246, 0.35), transparent 60%),
+    radial-gradient(360px 140px at 88% 0%, rgba(99, 102, 241, 0.28), transparent 60%);
+  pointer-events: none;
+}
+.app-header::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  pointer-events: none;
 }
 .header-title {
   display: flex;
   align-items: center;
   gap: 10px;
+  position: relative;
+  z-index: 1;
 }
 .header-title h1 {
   font-size: 19px;
@@ -164,37 +215,52 @@ onUnmounted(() => {
   letter-spacing: 0.2px;
   color: #fff;
 }
+.header-sub {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 0.3px;
+  padding-left: 12px;
+  margin-left: 2px;
+  border-left: 1px solid rgba(255, 255, 255, 0.18);
+  font-weight: 400;
+  white-space: nowrap;
+}
 .logo {
-  width: 34px;
-  height: 34px;
-  border-radius: 9px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   background: linear-gradient(135deg, #6366f1, #8b5cf6);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 10px rgba(99, 102, 241, 0.45);
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 .header-actions {
   display: flex;
   gap: 8px;
   align-items: center;
+  position: relative;
+  z-index: 1;
 }
 .header-btn {
-  background: var(--header-btn);
+  background: rgba(255, 255, 255, 0.1);
   color: var(--header-text);
-  border: none;
-  border-radius: 8px;
-  padding: 6px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 9px;
+  padding: 7px 13px;
   font-size: 13px;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 6px;
   font-weight: 500;
-  transition: background 0.2s ease, transform 0.15s ease;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
 }
 .header-btn:hover {
-  background: var(--header-btn-hover);
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
   transform: translateY(-1px);
 }
 .status-dot {
@@ -202,8 +268,9 @@ onUnmounted(() => {
   align-items: center;
   gap: 5px;
   font-size: 13px;
-  opacity: 0.85;
+  opacity: 0.9;
   color: #fff;
+  margin-right: 4px;
 }
 .status-dot::before {
   content: '';
@@ -299,58 +366,102 @@ onUnmounted(() => {
   gap: 12px;
 }
 
-/* 消息气泡 */
-.msg {
-  max-width: 85%;
-  padding: 10px 14px;
-  border-radius: 12px;
-  font-size: 14px;
-  line-height: 1.6;
-  word-break: break-word;
-  animation: msgIn 0.3s cubic-bezier(0.21, 1.02, 0.73, 1) both;
-}
+/* 消息气泡样式已迁移到 MessageItem.vue（.msg-ai 现为 .ai-row 子元素，需在子组件作用域定义）。
+   此处仅保留 msgIn 动画，供空状态欢迎卡片 .welcome 使用。 */
 @keyframes msgIn {
   from { opacity: 0; transform: translateY(10px) scale(0.985); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
-.msg-user {
-  align-self: flex-end;
-  background: var(--grad-primary-strong);
-  color: #fff;
-  border-bottom-right-radius: 4px;
-  box-shadow: 0 3px 12px rgba(99, 102, 241, 0.35);
+
+/* 空状态欢迎卡片 */
+.welcome {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 14px;
+  padding: 40px 24px;
+  animation: msgIn 0.4s cubic-bezier(0.21, 1.02, 0.73, 1) both;
 }
-.msg-ai {
-  align-self: flex-start;
-  background: var(--msg-ai-bg);
-  color: var(--text);
-  border-bottom-left-radius: 4px;
+.welcome-orbit {
   position: relative;
-  margin-left: 44px;
-}
-.msg-ai::before {
-  content: '✦';
-  color: #fff;
-  font-size: 15px;
+  width: 96px;
+  height: 96px;
   display: flex;
   align-items: center;
   justify-content: center;
-  position: absolute;
-  left: -44px;
-  top: 0;
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
-  background: var(--grad-primary);
-  box-shadow: 0 3px 10px rgba(99, 102, 241, 0.38);
 }
-.msg-system {
-  align-self: center;
-  background: var(--warn-bg);
-  color: var(--warn-text);
-  font-size: 12px;
-  padding: 6px 12px;
-  border-radius: 8px;
-  max-width: 95%;
+.welcome-logo {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  background: var(--grad-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 28px rgba(99, 102, 241, 0.4);
+  position: relative;
+  z-index: 2;
+  animation: float 4s ease-in-out infinite;
+}
+.orbit-dot {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--primary);
+  opacity: 0.5;
+  animation: pulse 2.4s ease-in-out infinite;
+}
+.orbit-dot.d1 { width: 8px; height: 8px; top: 4px; right: 10px; animation-delay: 0s; }
+.orbit-dot.d2 { width: 5px; height: 5px; bottom: 12px; left: 4px; animation-delay: 0.8s; }
+.orbit-dot.d3 { width: 6px; height: 6px; top: 24px; left: -2px; animation-delay: 1.6s; }
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.25); }
+}
+.welcome h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--heading);
+  margin-top: 6px;
+}
+.welcome p {
+  font-size: 14px;
+  color: var(--text-muted);
+  max-width: 420px;
+  line-height: 1.7;
+}
+.welcome-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 6px;
+}
+.welcome-chip {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 16px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  background: var(--panel-bg);
+  border: 1px solid var(--border-strong);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.18s;
+  font-weight: 500;
+}
+.welcome-chip:hover {
+  color: var(--primary);
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
 }
 </style>

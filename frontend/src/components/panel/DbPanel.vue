@@ -1,7 +1,8 @@
 <script setup>
 import { computed } from 'vue'
-import { Database, RefreshCw, Trash2, ChevronDown, ChevronRight, FileText } from '@lucide/vue'
+import { Database, RefreshCw, Trash2, ChevronRight, FileText } from '@lucide/vue'
 import { useSettingsStore } from '../../stores/settings'
+import CollapsibleCard from './CollapsibleCard.vue'
 import TreeNode from './TreeNode.vue'
 
 const settings = useSettingsStore()
@@ -46,17 +47,15 @@ async function clearAll() {
 </script>
 
 <template>
-  <div class="db-panel">
-    <div class="panel-head">
-      <div class="panel-title"><Database :size="15" /> 数据库管理</div>
-      <div class="head-actions">
-        <span class="health" :class="dbOk ? 'ok' : 'err'">
-          <span class="dot"></span>{{ dbOk ? '已连接' : '未连接' }}
-        </span>
-        <button class="icon-btn" title="刷新" @click="settings.refreshParents(true)"><RefreshCw :size="14" /></button>
-        <button class="icon-btn danger" title="清空全部" @click="clearAll"><Trash2 :size="14" /></button>
-      </div>
-    </div>
+  <CollapsibleCard title="数据库管理" persist-key="db">
+    <template #icon><Database :size="15" /></template>
+    <template #actions>
+      <span class="health" :class="dbOk ? 'ok' : 'err'">
+        <span class="dot"></span>{{ dbOk ? '已连接' : '未连接' }}
+      </span>
+      <button class="icon-btn" title="刷新" @click="settings.refreshParents(true)"><RefreshCw :size="14" /></button>
+      <button class="icon-btn danger" title="清空全部" @click="clearAll"><Trash2 :size="14" /></button>
+    </template>
 
     <div class="db-stats">
       父块 <b>{{ settings.health.parent_count }}</b> · 子块 <b>{{ settings.health.count }}</b>
@@ -113,34 +112,10 @@ async function clearAll() {
         </div>
       </div>
     </div>
-  </div>
+  </CollapsibleCard>
 </template>
 
 <style scoped>
-.db-panel {
-  display: flex;
-  flex-direction: column;
-  margin: 0 16px 16px;
-  background: var(--panel-sub-bg);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  overflow: hidden;
-}
-.panel-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
-}
-.panel-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 600;
-  font-size: 14px;
-  color: var(--text);
-}
 .head-actions {
   display: flex;
   align-items: center;

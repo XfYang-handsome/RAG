@@ -1,7 +1,8 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import { FileText, Save } from '@lucide/vue'
 import { useSettingsStore } from '../../stores/settings'
+import CollapsibleCard from './CollapsibleCard.vue'
 
 const settings = useSettingsStore()
 const saving = ref(false)
@@ -17,13 +18,13 @@ async function save() {
 </script>
 
 <template>
-  <div class="sp-panel">
-    <div class="panel-head">
-      <div class="panel-title"><FileText :size="15" /> 系统提示词</div>
+  <CollapsibleCard title="系统提示词" persist-key="prompt">
+    <template #icon><FileText :size="15" /></template>
+    <template #actions>
       <button class="save-btn" :disabled="saving" @click="save">
         <Save :size="13" />{{ saving ? '保存中...' : '保存' }}
       </button>
-    </div>
+    </template>
     <div class="sp-body">
       <textarea
         v-model="settings.systemPrompt"
@@ -31,34 +32,10 @@ async function save() {
         placeholder="输入系统提示词（可选），将注入到每次对话的 system 角色中..."
       ></textarea>
     </div>
-  </div>
+  </CollapsibleCard>
 </template>
 
 <style scoped>
-.sp-panel {
-  display: flex;
-  flex-direction: column;
-  margin: 0 16px 16px;
-  background: var(--panel-sub-bg);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  overflow: hidden;
-}
-.panel-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
-}
-.panel-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 600;
-  font-size: 14px;
-  color: var(--text);
-}
 .save-btn {
   display: flex;
   align-items: center;

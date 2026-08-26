@@ -5,6 +5,7 @@ import {
   X, RotateCcw, Trash2, Wand2,
 } from '@lucide/vue'
 import { useUploadStore } from '../../stores/upload'
+import CollapsibleCard from './CollapsibleCard.vue'
 
 const upload = useUploadStore()
 const fileInput = ref(null)
@@ -78,15 +79,15 @@ function taskStatusText(s) {
 </script>
 
 <template>
-  <div class="upload-panel">
-    <div class="panel-head">
-      <div class="panel-title"><Upload :size="15" /> 文件上传</div>
+  <CollapsibleCard title="文件上传" persist-key="upload">
+    <template #icon><Upload :size="15" /></template>
+    <template #actions>
       <label class="enhance-toggle" title="增强解析：用 deepdoc 做布局/表格/结构识别（更慢但更准）">
         <input v-model="upload.enhance" type="checkbox" />
         <Wand2 :size="13" />
         <span>增强</span>
       </label>
-    </div>
+    </template>
 
     <div
       class="drop-zone"
@@ -145,34 +146,10 @@ function taskStatusText(s) {
         </span>
       </div>
     </div>
-  </div>
+  </CollapsibleCard>
 </template>
 
 <style scoped>
-.upload-panel {
-  display: flex;
-  flex-direction: column;
-  margin: 0 16px 16px;
-  background: var(--panel-sub-bg);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  overflow: hidden;
-}
-.panel-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
-}
-.panel-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 600;
-  font-size: 14px;
-  color: var(--text);
-}
 .enhance-toggle {
   display: flex;
   align-items: center;
