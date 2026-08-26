@@ -1,0 +1,257 @@
+/* ============ 主题变量（从旧版 static/index.html 迁移） ============ */
+:root {
+  --bg: #f0f2f5;
+  --panel-bg: #fff;
+  --panel-sub-bg: #f9fafb;
+  --border: #eee;
+  --border-strong: #ddd;
+  --border-light: #f0f0f0;
+  --text: #333;
+  --text-secondary: #555;
+  --text-muted: #6b7280;
+  --text-faint: #9ca3af;
+  --heading: #1a1a2e;
+  --primary: #6366f1;
+  --primary-hover: #4f46e5;
+  --primary-soft: #f5f3ff;
+  --primary-disabled: #a5b4fc;
+  --success: #059669;
+  --success-soft: #a7f3d0;
+  --danger: #dc2626;
+  --warn-bg: #fef3c7;
+  --warn-text: #92400e;
+  --code-bg: #e2e8f0;
+  --code-text: #c026d3;
+  --pre-bg: #1e293b;
+  --pre-text: #e2e8f0;
+  --blockquote: #64748b;
+  --msg-ai-bg: #f1f5f9;
+  --header-bg: #1a1a2e;
+  --header-text: #fff;
+  --header-btn: #374151;
+  --header-btn-hover: #4b5563;
+  --shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+  --grad-primary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  --grad-primary-strong: linear-gradient(135deg, #5b54f0 0%, #7c3aed 100%);
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.07);
+  --shadow-md: 0 6px 20px rgba(15, 23, 42, 0.1);
+  --shadow-lg: 0 20px 60px rgba(15, 23, 42, 0.18);
+  --card-hover: 0 10px 30px rgba(99, 102, 241, 0.14);
+}
+
+[data-theme='dark'] {
+  --bg: #0b1120;
+  --panel-bg: #111a2e;
+  --panel-sub-bg: #182238;
+  --border: #24304a;
+  --border-strong: #34415f;
+  --border-light: #1c2740;
+  --text: #d6dae2;
+  --text-secondary: #a8b0bd;
+  --text-muted: #8b93a3;
+  --text-faint: #6b7484;
+  --heading: #e8eaf0;
+  --primary: #6366f1;
+  --primary-hover: #4f46e5;
+  --primary-soft: #2a2d4d;
+  --primary-disabled: #4b5080;
+  --success: #34d399;
+  --success-soft: #14532d;
+  --danger: #f87171;
+  --warn-bg: #3a2f14;
+  --warn-text: #fbbf24;
+  --code-bg: #2a2f3a;
+  --code-text: #e879f9;
+  --pre-bg: #0d1117;
+  --pre-text: #c9d1d9;
+  --blockquote: #9aa3b2;
+  --msg-ai-bg: #242a35;
+  --header-bg: #151821;
+  --header-text: #e8eaf0;
+  --header-btn: #2a2f3a;
+  --header-btn-hover: #3a4150;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  --grad-primary: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+  --grad-primary-strong: linear-gradient(135deg, #4f46e5 0%, #9333ea 100%);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.6);
+  --card-hover: 0 10px 30px rgba(99, 102, 241, 0.28);
+}
+
+/* 跟随系统（未显式指定 data-theme 时） */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']):not([data-theme='dark']) {
+    --bg: #0b1120;
+    --panel-bg: #111a2e;
+    --panel-sub-bg: #182238;
+    --border: #24304a;
+    --border-strong: #34415f;
+    --border-light: #1c2740;
+    --text: #d6dae2;
+    --text-secondary: #a8b0bd;
+    --text-muted: #8b93a3;
+    --text-faint: #6b7484;
+    --heading: #e8eaf0;
+    --primary: #6366f1;
+    --primary-hover: #4f46e5;
+    --primary-soft: #2a2d4d;
+    --primary-disabled: #4b5080;
+    --success: #34d399;
+    --success-soft: #14532d;
+    --danger: #f87171;
+    --warn-bg: #3a2f14;
+    --warn-text: #fbbf24;
+    --code-bg: #2a2f3a;
+    --code-text: #e879f9;
+    --pre-bg: #0d1117;
+    --pre-text: #c9d1d9;
+    --blockquote: #9aa3b2;
+    --msg-ai-bg: #242a35;
+    --header-bg: #151821;
+    --header-text: #e8eaf0;
+    --header-btn: #2a2f3a;
+    --header-btn-hover: #3a4150;
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    --grad-primary: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+    --grad-primary-strong: linear-gradient(135deg, #4f46e5 0%, #9333ea 100%);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.6);
+    --card-hover: 0 10px 30px rgba(99, 102, 241, 0.28);
+  }
+}
+
+/* ============ 基础样式 ============ */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+#app {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ============ 全局细滚动条 ============ */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-faint);
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+/* ============ Markdown 渲染样式（AI 消息正文，v-html 全局作用域） ============ */
+.md h1,
+.md h2,
+.md h3,
+.md h4 {
+  margin: 12px 0 6px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--heading);
+}
+.md h1 {
+  font-size: 18px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 4px;
+}
+.md h2 { font-size: 16px; }
+.md h3 { font-size: 15px; }
+.md h4 { font-size: 14px; }
+.md p { margin: 6px 0; }
+.md ul,
+.md ol { margin: 6px 0; padding-left: 20px; }
+.md li { margin: 3px 0; }
+.md code {
+  background: var(--code-bg);
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 12px;
+  color: var(--code-text);
+}
+.md pre {
+  background: var(--pre-bg);
+  color: var(--pre-text);
+  padding: 10px 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 8px 0;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.md pre code {
+  background: none;
+  color: inherit;
+  padding: 0;
+  font-size: 12px;
+}
+.md strong { font-weight: 700; color: var(--heading); }
+.md em { font-style: italic; }
+.md blockquote {
+  border-left: 3px solid var(--primary);
+  padding-left: 10px;
+  margin: 8px 0;
+  color: var(--blockquote);
+}
+.md hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 12px 0;
+}
+.md table {
+  border-collapse: collapse;
+  margin: 8px 0;
+  width: 100%;
+}
+.md th,
+.md td {
+  border: 1px solid var(--border-strong);
+  padding: 6px 10px;
+  font-size: 13px;
+  text-align: left;
+}
+.md th {
+  background: var(--panel-sub-bg);
+  font-weight: 700;
+}
+.md a {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+/* KaTeX 公式溢出兜底 */
+.md .katex-display {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 4px 0;
+}

@@ -1,0 +1,12 @@
+{
+  "servers": [
+    {
+      "name": "RAG-Service",
+      "command": "-m",
+      "args": "mcp_service --host 127.0.0.1 --port 8765",
+      "url": "http://127.0.0.1:8765/mcp",
+      "transport": "streamable-http",
+      "auto_start": false
+    }
+  ]
+}

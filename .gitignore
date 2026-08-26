@@ -1,0 +1,30 @@
+# ============ Python ============
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+
+# ============ Runtime data (local DB / uploads / logs / task state) ============
+milvus/
+data/
+models/
+
+# ============ Frontend ============
+frontend/node_modules/
+static/dist/
+
+# ============ Sensitive config (contains real api_key / DB password) ============
+config/models.json
+config/db.json
+
+# ============ IDE / tools ============
+.vscode/
+.idea/
+.playwright-cli/
+
+# ============ OS ============
+.DS_Store
+Thumbs.db
+*.log

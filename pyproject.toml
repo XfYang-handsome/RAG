@@ -1,0 +1,79 @@
+[project]
+package-mode = false 
+name = "rag"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "liuli"}
+]
+readme = "README.md"
+requires-python = "3.12.10"
+dependencies = [
+    "fastapi (>=0.141.1,<0.142.0)",
+    "uvicorn[standard] (>=0.52.3,<0.53.0)",
+    "pydantic (>=2.13.4,<3.0.0)",
+    "python-multipart (>=0.0.32,<0.0.33)",
+    "requests (>=2.34.2,<3.0.0)",
+    "pyyaml (>=6.0.3,<7.0.0)",
+    "openai (>=3.0.0,<4.0.0)",
+    "langchain-openai (>=1.5.0,<2.0.0)",
+    "langchain-core (>=1.5.4,<2.0.0)",
+    "langgraph (>=1.2.11,<2.0.0)",
+    "fastmcp[server] (>=3.4.7,<4.0.0)",
+    "pymilvus (>=3.0.1,<4.0.0)",
+    "chunklet-py (>=2.4.2,<3.0.0)",
+    "pdfminer-six (>=20260107,<20260108)",
+    "python-docx (>=1.2.0,<2.0.0)",
+    "python-pptx (>=1.0.2,<2.0.0)",
+    "ebooklib (>=0.20,<0.21)",
+    "odfpy (>=1.4.1,<2.0.0)",
+    "mailparse (>=1.0.15,<2.0.0)",
+    "openpyxl (>=3.1.5,<4.0.0)",
+    "striprtf (>=0.0.32,<0.0.33)",
+    "transformers == 4.46.3",
+    "tokenizers == 0.20.3",
+    "safetensors (>=0.8.0,<0.9.0)",
+    "numpy (>=2.5.2,<3.0.0)",
+    "tiktoken (>=0.13.0,<0.14.0)",
+    "beartype (>=0.22.9,<0.23.0)",
+    "pypdf (>=6.16.1,<7.0.0)",
+    "pandas (>=3.0.5,<4.0.0)",
+    "chardet (>=7.6.0,<8.0.0)",
+    "beautifulsoup4 (>=4.15.0,<5.0.0)",
+    "markdown (>=3.10.3,<4.0.0)",
+    "huggingface-hub (>=0.23.2,<1.0)",
+    "onnxruntime-gpu (>=1.26.0,<1.27.0)",
+    "opencv-python (>=5.0.0.93,<6.0.0.0)",
+    "pdfplumber (>=0.11.10,<0.12.0)",
+    "xgboost (>=2.1.4,<3.0.0)",
+    "scikit-learn (>=1.9.0,<2.0.0)",
+    "shapely (>=2.1.2,<3.0.0)",
+    "pyclipper (>=1.4.0,<2.0.0)",
+    "six (>=1.17.0,<2.0.0)",
+    "reportlab (>=5.0.0,<6.0.0)",
+    "mammoth (>=1.12.1,<2.0.0)",
+    "markdownify (>=1.2.3,<2.0.0)",
+    "antlr4-python3-runtime (==4.11.1)",
+    "sympy (==1.14.0)",
+    "torch (==2.7.1)",
+    "celery (>=5.6.3,<6.0.0)",
+    "redis (>=8.1.0,<9.0.0)",
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[[tool.poetry.source]]
+name = "tsinghua"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+priority = "primary"
+
+# PyTorch 官方 CUDA 12.8 源（RTX 50 系列 / Blackwell 需要 cu128；PyPI 上只有 CPU 版）
+[[tool.poetry.source]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+priority = "explicit"
+[tool.poetry.dependencies]
+torch = {source = "pytorch-cu128"}

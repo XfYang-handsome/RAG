@@ -1,0 +1,11 @@
+{
+  "milvus": [
+    {
+      "name": "本地默认库",
+      "type": "local",
+      "url": "http://localhost:19530",
+      "token": "",
+      "db_name": ""
+    }
+  ]
+}

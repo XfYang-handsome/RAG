@@ -1,0 +1,18 @@
+{
+  "llm": [
+    {
+      "name": "示例模型",
+      "type": "online",
+      "model": "your-model-name",
+      "base_url": "https://your-api-host/v1",
+      "api_key": "your-api-key",
+      "protocol": "openai"
+    }
+  ],
+  "embedding": [],
+  "reranker": [],
+  "rewrite": [],
+  "tool_llm": [],
+  "summary": [],
+  "current": {}
+}

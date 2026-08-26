@@ -1,0 +1,176 @@
+{
+  "chunking": {
+    "parent_chunk_size": 1024,
+    "child_chunk_size": 256,
+    "parent_overlap": 100,
+    "child_overlap": 30
+  },
+  "search": {
+    "retrieval_top_k": 20,
+    "rerank_top_n": 5,
+    "grade_relevance_threshold": 0.25,
+    "rewrite": false,
+    "hybrid": true,
+    "retrieval_mode": "tree",
+    "kb_retry": {
+      "enabled": true,
+      "retry_mode": "tree"
+    }
+  },
+  "summary": {
+    "enabled": true,
+    "concurrency": 4
+  },
+  "deepdoc": {
+    "zoomin": 3
+  },
+  "ingest": {
+    "dual_queue": false,
+    "parse_queue": "parse_queue",
+    "embedding_queue": "embedding_queue",
+    "max_retries": 3,
+    "retry_backoff_base": 5,
+    "visibility_timeout": 600,
+    "redis_broker": "redis://127.0.0.1:6379/0",
+    "redis_backend": "redis://127.0.0.1:6379/1",
+    "worker_pool": "threads",
+    "worker_concurrency": 4
+  },
+  "tools": {
+    "web_search": {
+      "enabled": true
+    },
+    "calculate_pi": {
+      "enabled": true
+    },
+    "calculate_expression": {
+      "enabled": true
+    }
+  },
+  "structure": {
+    "reconstruct": {
+      "enabled": true,
+      "batch_size": 20,
+      "max_llm_calls": 30,
+      "root_content_ratio": 0.6
+    }
+  },
+  "agentic": {
+    "max_iterations": 5,
+    "max_tool_calls": 12,
+    "importance_high": 0.8,
+    "no_progress_threshold": 3,
+    "medium": {
+      "max_iterations": 3
+    },
+    "cache": {
+      "enabled": true,
+      "sim_threshold": 0.9,
+      "max_entries": 32
+    },
+    "search": {
+      "top_k": 5,
+      "multi_query_enabled": true,
+      "multi_query_min": 2,
+      "multi_query_max": 4,
+      "translate_keywords_min": 3,
+      "translate_keywords_max": 6
+    },
+    "context": {
+      "neighbor_window": 2
+    },
+    "evaluator": {
+      "new_evidence_chars": 500,
+      "history_evidence_chars": 150,
+      "summary_chars": 80,
+      "retry": 1,
+      "prune_top_n": 8
+    },
+    "controller": {
+      "retry": 1
+    },
+    "web_search": {
+      "enabled": true,
+      "max_calls": 2,
+      "num": 5,
+      "min_no_progress_before": 2,
+      "fetch_body": {
+        "enabled": true,
+        "max_pages": 3,
+        "max_chars": 2000
+      }
+    },
+    "planner": {
+      "min_requirements": 1,
+      "max_requirements": 5
+    },
+    "synthesizer": {
+      "evidence_chars": 1500
+    },
+    "tree_nav": {
+      "node_min_score": 0.2,
+      "node_high_score": 0.5,
+      "leaf_min_score": 0.2,
+      "leaf_high_score": 0.5,
+      "max_depth": 4,
+      "max_expansions": 8,
+      "max_llm_calls": 6,
+      "max_leaf_reads": 20,
+      "min_evidences": 2,
+      "neighbor_window": 1,
+      "empty_recall_top_k": 3
+    },
+    "doc_router": {
+      "enabled": true,
+      "fallback_top_n": 3,
+      "min_evidences_fallback": 3,
+      "novelty_enabled": true,
+      "coverage_high": 0.55,
+      "coverage_max_skip": 2,
+      "coverage_evidence_top_k": 5
+    }
+  },
+  "system_prompt": "",
+  "server": {
+    "host": "127.0.0.1",
+    "port": 8000
+  },
+  "mcp": {
+    "features": {
+      "websearch": true
+    },
+    "web_search": {
+      "proxy": "",
+      "timeout": 10.0
+    },
+    "tool_calling": {
+      "enabled": true
+    }
+  },
+  "supported_extensions": [
+    ".txt",
+    ".md",
+    ".py",
+    ".js",
+    ".ts",
+    ".java",
+    ".cpp",
+    ".c",
+    ".h",
+    ".json",
+    ".xml",
+    ".yaml",
+    ".yml",
+    ".csv",
+    ".html",
+    ".css",
+    ".pdf",
+    ".docx",
+    ".pptx",
+    ".xlsx",
+    ".epub",
+    ".odt",
+    ".rtf",
+    ".eml"
+  ]
+}
