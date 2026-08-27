@@ -24,6 +24,7 @@
 - [14. API 接口](#14-api-接口)
 - [15. 故障排查](#15-故障排查)
 - [16. RAG 评测（Ragas）](#16-rag-评测ragas)
+- [17. DeepSeek Harness 融合](#17-deepseek-harness-融合)
 - [附录：项目文件速查表](#附录项目文件速查表)
 
 ---
@@ -213,6 +214,7 @@ RAG/
 │   ├── collect.py            # 组合遍历采集（answer + contexts）
 │   ├── score.py              # Ragas 评分（5 指标，独立 venv 运行）
 │   ├── report.py             # 汇总报告
+│   ├── run_full.py           # 一键编排（生成→采集→评分→报告，自动跨环境 + 断点续跑）
 │   └── data/                 # dataset.json / runs/ / scores/ / report.md
 ├── config/
 │   ├── config.json          # 系统配置
@@ -1010,6 +1012,8 @@ def run_agentic(question, reranker, llm, ...):
 
 **5. 无证据时不编造**：`synthesizer.py` 在无验证证据时，用 LLM 生成一个诚实、有针对性的"无法回答"回复（含换问法建议），而不是返回固定的 `[未获取到回答]`。
 
+**6. Controller 硬约束：0 证据禁止 ANSWER**（`controller.py`）：对「单点事实题」，Controller LLM 常自认已知答案、首轮就误判「信息已充分」直接合成，导致 0 证据 → citations 为空。故在 `choose_action` 加硬约束——**0 证据但仍有缺口时，强制先 SEARCH 一次**（LLM 决策在其后），彻底杜绝「没检索就回答」。若检索真的返回空，由 stopping 的 no-progress 机制兜底终止，不会死循环。
+
 ---
 
 ## 9. Reranker 重排序
@@ -1324,6 +1328,8 @@ python __main__.py --mcp --celery    # 三个服务一起启停
 | 前端页面打不开 / 白屏 | 没构建前端产物 `static/dist/` | 首次运行前 `cd frontend && npm install && npm run build`（见 3.6） |
 | 改了前端代码但页面没变 | `server.py` 缓存了旧 `index.html`，且没重新构建 | `npm run build` 后重启主程序（见 3.6） |
 | 数学公式显示成竖排 Unicode（`∫`） | 模型在「无法回答」兜底分支用 Unicode 拼公式，未按 `\(...\)` 输出 | 属工具调用被压制导致，修复后模型能正常回答即可输出 LaTeX（见 11.4） |
+| Milvus 容器反复重启，`docker logs` 报 `panic: etcdserver: leader changed` | 非正常关机导致嵌入式 etcd 的 WAL/快照状态不一致，raft 恢复时崩溃（etcd 已知 bug） | 停容器 → 删除 `milvus/volumes/milvus/etcd` → 重启（etcd 全新初始化）→ 重新入库（见 16.7「换 embedding 必须重新入库」） |
+| 检索结果 `ctx=0`（agentic 答案「无法回答」但无报错） | 两类原因：① embedding 服务断连，被 `retriever.py` 的 `except` 静默吞掉 → 0 证据提前停止；② Controller 首轮误判「信息已充分」直接 ANSWER | ① 检查 embedding 服务连通性；② 已在 `controller.py` 加硬约束（0 证据时强制先检索），升级到当前版本即可 |
 
 ---
 
@@ -1365,6 +1371,7 @@ eval/
 ├── collect.py          # 组合遍历采集（跑 pipeline，采集 answer + contexts）
 ├── score.py            # Ragas 评分（5 指标）
 ├── report.py           # 汇总报告（组合 × 指标矩阵 + 维度对比）
+├── run_full.py         # 一键编排（生成→采集→评分→报告，自动跨环境切换 + 断点续跑）
 └── data/
     ├── dataset.json    # 评测集（20 题 QA 对）
     ├── runs/           # 采集结果 {combo_id}.json
@@ -1394,7 +1401,29 @@ eval/
  "agentic_vector_ws0", "agentic_hybrid_ws0", "agentic_tree_ws0"]
 ```
 
-### 16.5 评测流程（三步）
+### 16.5 评测流程
+
+**方式一（推荐）：一键编排 `run_full.py`**
+
+一条命令完成「清空旧产物 → 生成 → 采集 → 评分 → 报告」全流程，自动切换采集/评分两个环境，并内置断点续跑：
+
+```powershell
+# 从头完整跑「检索模式对比」子集（6 组 × 20 题）
+poetry run python eval/run_full.py
+
+# 重新生成评测集后再完整跑
+poetry run python eval/run_full.py --regenerate
+
+# 断网/中断后续跑（跳过已完成题，自动补 ctx=0 空结果）
+poetry run python eval/run_full.py --keep
+
+# 只跑单个组合（先冒烟验证）
+poetry run python eval/run_full.py --combo rag_hybrid_rw0_tc0_ws0
+```
+
+`run_full.py` 常用参数：`--subset all|mode-comparison`、`--combo <id>`、`--regenerate`、`--keep`（断点续跑）、`--skip-collect`（只评分+报告）、`--skip-score`（只采集）。
+
+**方式二：分步手动执行**
 
 ```powershell
 # ① 生成评测集（20 题：每篇 5 题 + 5 题跨文档）
@@ -1418,6 +1447,7 @@ poetry run python eval/report.py
 | | `--combo <id>` | 只跑单个组合 |
 | | `--limit N` | 每个组合只跑前 N 题（冒烟测试） |
 | | `--refresh` | 忽略已有结果重跑 |
+| | `--retry-empty` | 只重跑「检索结果为空（ctx=0 且无 error）」的题，其余跳过（断网恢复后补跑用） |
 | `score.py` | `--subset` / `--combo` / `--limit` | 同上 |
 
 报告 `eval/data/report.md` 输出：各模式「组合 × 指标」矩阵 + 按维度分组的对比表（rag/agentic 分开），直接回答「哪种检索模式召回精度更高、哪种幻觉更少」。
@@ -1448,6 +1478,121 @@ eval/.venv/Scripts/python -m pip install "langchain-community<0.4.0"
 
 **评测集质量决定上限**：Context Recall / Precision / Correctness 三个指标需要标准答案（ground_truth）。本项目用 LLM 从文档 chunk 自动生成 QA 对（`generate_dataset.py`），标准答案与文档内容强一致，但终究是「近似」，追求绝对分数意义有限——Ragas 更适合做**横向对比**（改切分/换 embedding/调检索模式前后）。
 
+**采集时 agentic 的 `ctx=0` 要区分三种成因**（都会表现为「答案无法回答但无报错」）：
+
+| 成因 | 特征 | 处理 |
+|---|---|---|
+| embedding 断连（静默降级） | `retriever.py` 的 `except` 吞掉异常 → 0 证据提前停止 | 检查 embedding 服务；网络恢复后 `--retry-empty` 补跑 |
+| 真实漏检（vector 模式 query 英化偏移） | 同一题 hybrid 能检到、vector 检不到 | 属**真实评测发现**（vector 对中英偏移更敏感），保留 |
+| 评测集幻觉题 | 知识库里根本没这内容（LLM 生成 ground_truth 时编造） | 属评测集质量问题，重生成时过滤覆盖不足的题 |
+
+> 第一类（断连）是噪声，应补跑消除；后两类是**有价值的评测结论**，不应被当作错误剔除。
+
+---
+
+## 17. DeepSeek Harness 融合
+
+### 17.1 是什么、为什么要融合
+
+[DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（`dsh`，DeepSeek 开源的 Agent 运行时）定位是「**Model + Harness = Agent**」——一切皆插件（模型、工具、Agent Loop 都是插件），并**原生支持 MCP 协议**。
+
+融合的意义：本系统的 RAG 检索能力已经封装成 MCP 工具（见第 11 章），因此可以把这些工具直接注册进 Harness，让 Harness 的**通用 Agent 循环**驱动本系统的知识库检索，形成「Harness Agent + RAG 检索」的融合体——用更成熟的 Agent 运行时替换/对比自研的 `agentic_rag`。
+
+### 17.2 融合架构
+
+```
+┌───────────────────────────────────────────┐
+│   DeepSeek Harness（Agent 前端）           │
+│   任务拆解 → 工具编排 → 会话循环           │
+│   模型: SiliconFlow DeepSeek（OpenAI 兼容）│
+└───────────────────┬───────────────────────┘
+                    │ MCP 协议（streamable-http）
+                    ▼
+┌───────────────────────────────────────────┐
+│   mcp_service（本系统 RAG MCP 服务器）     │
+│   search_knowledge_base / list_documents  │
+│   get_knowledge_toc / web_search / ...    │
+└───────────────────┬───────────────────────┘
+                    ▼
+        db_service + Milvus（知识库）
+```
+
+职责划分：Harness 负责「何时检索、检索什么、检索够不够、怎么汇总」，`mcp_service` 负责「具体检索」，两者通过 MCP 协议解耦。
+
+### 17.3 接入配置
+
+**前提 1：启动本系统的 MCP 服务**
+
+```bash
+poetry run python __main__.py --mcp   # 主程序 + MCP 一起启动，监听 http://127.0.0.1:8765/mcp
+```
+
+**前提 2：安装 Harness**（Node 环境）
+
+```bash
+npx @deepseek-ai/dsh
+```
+
+**① 模型统一到 SiliconFlow**（`~/.dsh/settings.yaml`）
+
+Harness 支持「自定义 OpenAI 兼容端点」，无需 DeepSeek 官方 API：
+
+```yaml
+providers:
+  siliconflow:
+    apiKeyEnv: SILICONFLOW_API_KEY
+    api: openai-completions
+    baseURL: https://api.siliconflow.com/v1
+    models:
+      - id: deepseek-ai/DeepSeek-V3.2     # 建议先用非 reasoning 模型，兼容更稳
+      - id: deepseek-ai/DeepSeek-V4-Pro-0813
+```
+
+**② 把 RAG 检索注册为 MCP 工具**（`~/.dsh/profiles/<profile>/cordis.patch.yml`）
+
+`dsh-mcp-client` 是内核包（无需单独安装），用 `insert` 语法注册：
+
+```yaml
+- insert:
+    - id: mcp-rag
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: rag
+        transport: streamable-http
+        url: http://127.0.0.1:8765/mcp
+        toolCallTimeoutMs: 60000
+        failOnStartupError: false
+        reconnect:
+          enabled: true
+          initialDelayMs: 500
+          maxDelayMs: 30000
+          maxAttempts: 10
+```
+
+### 17.4 工具命名与验证
+
+注册后，本系统的 6 个工具会以 `mcp__rag__<工具名>` 形式暴露给 agent：
+
+```
+mcp__rag__search_knowledge_base
+mcp__rag__list_knowledge_documents
+mcp__rag__get_knowledge_toc
+mcp__rag__web_search
+mcp__rag__calculate_pi
+mcp__rag__calculate_expression
+```
+
+**验证配置**：`dsh web --dump-config` 应能看到 `mcp-rag` entry；重启 dsh 后在会话里问一个知识库问题，观察 agent 是否自动调用 `mcp__rag__search_knowledge_base`。
+
+### 17.5 注意事项
+
+| 事项 | 说明 |
+|---|---|
+| **Windows 系统代理** | 直连 `127.0.0.1:8765` 可能被系统代理劫持报 502（本系统 `manager.py` 已用 `NO_PROXY` 绕过）；若 Harness 侧也报 502，给 dsh 设 `NO_PROXY=127.0.0.1,localhost` |
+| **reasoning 模型兼容** | DeepSeek-V4-Pro 的 `thinking` 会干扰 agent loop，建议先用 V3.2（非 reasoning） |
+| **Windows 平台限制** | Harness 默认「编程 agent」组合（bash/PTY）不支持 Windows；RAG 检索场景不依赖 bash，可自定义轻量 profile（只挂 MCP 工具、去掉文件/bash 工具）在 Windows 跑 |
+| **定位差异** | Harness 是**通用** Agent 运行时（面向写代码/文件），自研 `agentic_rag` 是**为 RAG 检索专门设计**（evidence 去重、coverage 判据等）。两者是「并行对比」关系，不是谁替代谁 |
+
 ---
 
 ## 附录：项目文件速查表
@@ -1476,4 +1621,4 @@ eval/.venv/Scripts/python -m pip install "langchain-community<0.4.0"
 | `common/text_utils.py` | 通用文本工具（健壮 JSON 解析 / CJK 检测 / 查询英化） |
 | `agentic_rag/` | Agentic RAG 子包（多步检索循环） |
 | `mcp_service/` | MCP 服务子包（工具 + 管理 + 桥接） |
-| `eval/` | RAG 评测框架（Ragas，组合遍历采集 + 评分 + 报告，见第 16 章） |
+| `eval/` | RAG 评测框架（Ragas，一键编排 run_full.py + 采集 + 评分 + 报告，见第 16 章） |
