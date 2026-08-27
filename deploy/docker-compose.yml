@@ -1,0 +1,46 @@
+# RAG 知识库系统 — 外部依赖编排（Milvus 向量库 + Redis 消息队列）
+#
+# 由 deploy/setup.py 自动拉起，也可手动（在项目根目录执行）：
+#   docker compose -f deploy/docker-compose.yml up -d
+# 数据保存在项目目录下的 ./milvus 与 ./redis（bind mount，../ 相对本文件），
+# 拷贝整个项目目录即可整体迁移数据。
+#
+# 服务端口：
+#   - Milvus : 19530 (gRPC，后端连接用) / 9091 (健康检查 healthz)
+#   - Redis  : 6379 (Celery broker/backend)
+
+services:
+  milvus:
+    image: milvusdb/milvus:v2.4.15
+    command: ["milvus", "run", "standalone"]
+    environment:
+      # 嵌入式 etcd（单容器，无需额外 etcd/minio 容器）
+      ETCD_USE_EMBED: "true"
+      ETCD_DATA_DIR: /var/lib/milvus/etcd
+      # 本地文件存储（对象数据也写在 /var/lib/milvus 下）
+      COMMON_STORAGETYPE: local
+    ports:
+      - "19530:19530"
+      - "9091:9091"
+    volumes:
+      - ../milvus:/var/lib/milvus
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - ../redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped

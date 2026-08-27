@@ -232,6 +232,52 @@ RAG/
 
 ## 3. 环境要求与安装
 
+### 3.0 一键部署（全新电脑推荐）
+
+把仓库拷贝到新电脑后，只需两步即可跑起来。脚本会自动完成：检测 GPU 选依赖版本 → 生成配置 → `poetry install` → 下载 deepdoc 模型 → 构建前端 → 用 `deploy/docker-compose.yml` 拉起 Milvus + Redis → 健康检查。
+
+> **第一步：装好 4 个系统依赖**（一次性）
+> | 依赖 | 用途 | Windows | Linux | macOS |
+> |------|------|---------|-------|-------|
+> | Python 3.12 | 运行后端 | [python.org](https://www.python.org/downloads/) | `apt install python3.12` | `brew install python@3.12` |
+> | Poetry | 装 Python 依赖 | `(Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content \| py -` | `curl -sSL https://install.python-poetry.org \| python3 -` | `brew install poetry` |
+> | Docker | 跑 Milvus/Redis | 装 [Docker Desktop](https://www.docker.com/products/docker-desktop/) | `curl -fsSL https://get.docker.com \| sh` | 装 Docker Desktop |
+> | Node.js(+npm) | 构建前端 | [nodejs.org](https://nodejs.org/) LTS | `curl -fsSL https://deb.nodesource.com/setup_22.x \| sudo -E bash - && sudo apt install -y nodejs` | `brew install node` |
+>
+> 缺什么脚本会提示并按系统给出对应命令。NVIDIA GPU 可检测到并自动用 `cu128`，无 GPU 则自动切 CPU 版依赖（`--cpu`/`--gpu` 可强制指定）。
+
+> **第二步：跑初始化脚本**
+> ```bash
+> # Windows：双击 deploy/setup.bat（或）
+> python deploy\setup.py
+>
+> # Linux / macOS：
+> bash deploy/setup.sh   # 等价于 python3 deploy/setup.py
+> ```
+> 脚本按顺序执行，中途会 `poetry install`（首次较久）并下载模型，耐心等它跑完。
+
+> **第三步：填 API Key 并启动**
+> 1. 编辑 `config/models.json`（或启动后在 Web「系统设置」里填）—— 补上 LLM / Embedding / Reranker 的 API Key（如硅基流动）。
+> 2. 启动：
+>    - Windows：双击 `deploy/start.bat`
+>    - Linux / macOS：`bash deploy/start.sh`
+>    - 等价于 `poetry run python __main__.py --mcp --celery`
+> 3. 浏览器打开 http://127.0.0.1:8000
+
+**脚本清单与参数**：
+
+| 脚本（均在 `deploy/` 目录） | 作用 |
+|------|------|
+| `deploy/setup.bat` / `deploy/setup.sh` | 一键初始化（首次必跑一次） |
+| `deploy/start.bat` / `deploy/start.sh` | 一键启动（主程序 + MCP + Celery Worker） |
+| `deploy/stop.bat` / `deploy/stop.sh` | 一键停止 Milvus + Redis 容器 |
+
+`deploy/setup.py` 常用参数：`--cpu`（强制 CPU 依赖）、`--gpu`（强制 cu128）、`--restore`（把被 `--cpu` 改写的 `pyproject.toml` 恢复为 GPU 版）、`--skip-deps/--skip-models/--skip-frontend/--skip-services`（跳过已完成的步骤）。
+
+> **数据与迁移**：Milvus / Redis / deepdoc 模型数据分别落在项目目录下的 `./milvus`、`./redis`、`./models`（均为 bind mount，已被 `.gitignore` 忽略）。**拷贝整个项目目录即可整体带走数据**，新机上跑完 `setup` 后数据直接可用。切换容器编排与手动 `docker run`（见 3.3/3.4）二者等价，任选其一。
+
+> **首次启动说明**：`deploy/docker-compose.yml` 首次拉起 Milvus 需拉镜像并初始化（约 1~2 分钟），`deploy/setup.py` 会做健康检查并提示结果，超时属正常，稍后重跑或看容器日志即可。
+
 ### 3.1 环境
 
 - **Python**：3.12
