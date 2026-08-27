@@ -148,6 +148,7 @@ def main():
     ap.add_argument("--combo", default=None, help="只跑指定组合 id（默认全部）")
     ap.add_argument("--limit", type=int, default=None, help="每个组合最多跑多少题")
     ap.add_argument("--refresh", action="store_true", help="忽略已有结果，全部重跑")
+    ap.add_argument("--retry-empty", action="store_true", help="重跑检索结果为空（ctx=0 且无 error）的题，其余已完成的跳过")
     args = ap.parse_args()
 
     config.ensure_dirs()
@@ -176,6 +177,10 @@ def main():
             set_combo_config(combo)
 
             rows = [] if args.refresh else load_runs(combo["id"])
+            if args.retry_empty:
+                # 过滤掉「无 error 但 contexts 为空」的题（检索失败），使其重跑；
+                # 有 error 的题也一并过滤重跑（网络抖动导致的失败，非数据问题）。
+                rows = [r for r in rows if r.get("error") or len(r.get("contexts") or []) > 0]
             done_ids = {r.get("question_id") for r in rows}
 
             for qi, q in enumerate(dataset, 1):

@@ -195,6 +195,19 @@ def choose_action(state: AgentState, llm=None) -> Action:
     if state.iteration >= state.budget.max_iterations:
         return Action(type=ActionType.ANSWER)
 
+    # 1.5 硬约束：0 证据但仍有缺口时，禁止 ANSWER，强制先检索一次。
+    # 防止 Controller LLM 在首轮把「单点事实题」误判为「信息已充分」而直接合成
+    # （这类题 LLM 自认已知答案，倾向跳过检索），导致 0 证据 → citations 为空。
+    # 若检索真的返回空，则由 stopping 的 no-progress 机制兜底终止，不会死循环。
+    if not state.evidences and state.gaps:
+        first = state.gaps[0]
+        return Action(
+            type=ActionType.SEARCH,
+            target_gap=first.requirement_id,
+            query=state.question,
+            tool=RetrievalTool.HYBRID,
+        )
+
     # 2. LLM 决策
     if llm is None:
         llm = _get_controller_llm()
