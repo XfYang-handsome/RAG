@@ -2,7 +2,7 @@
 """
 评测集生成：从 doc_tree.db 抽取文档内容，用 LLM 生成 20 题 QA 对。
 
-  20 题 = README.md 5 题 + rag.pdf 5 题 + 2404.18231v2.pdf 5 题 + 跨文档 5 题
+  20 题 = 文档 A 5 题 + 文档 B 5 题 + 文档 C 5 题 + 跨文档 5 题
 
 输出：data/dataset.json
   [{"id": "q01", "question": ..., "ground_truth": ..., "doc_id": ..., "type": ...}, ...]

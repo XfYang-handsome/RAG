@@ -1,5 +1,24 @@
 # RAG 知识库系统 · 使用与实现详解
 
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB.svg?logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.141-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Vue 3](https://img.shields.io/badge/Vue-3-4FC08D.svg?logo=vuedotjs&logoColor=white)](https://vuejs.org/)
+[![Milvus](https://img.shields.io/badge/Milvus-2.x-00A1EA.svg)](https://milvus.io/)
+
+> 一个**生产级检索增强生成（RAG）知识库系统**：把私有文档智能解析入库，结合向量检索、文档树导航与 Agentic 多步推理，让大模型基于你的文档准确作答（带出处、不瞎编）。
+
+## 核心特性
+
+- **双引擎文档解析**：`chunklet-py` 语义分块 + RAGFlow `deepdoc` 版面/表格/OCR，自动构建「章节 → 小节 → 段落」文档树
+- **多路检索 + 重排序**：向量 / 混合 / 树导航三种检索，配合 BGE、Jina Reranker 重排序
+- **三种对话模式**：`direct`（纯 LLM）、`rag`（固定检索链路）、`agentic`（多步检索循环）
+- **MCP 集成**：内置 MCP 工具管理，可接入外部工具扩展问答能力
+- **评测闭环**：基于 Ragas 自动生成 QA 评测集，量化检索与生成质量
+- **异步入库 + 一键部署**：Celery + Redis 任务队列，Windows / Linux / macOS 一键脚本
+
+---
+
 > 这是一份**面向所有人的教程式文档**。无论你是第一次接触 RAG，还是想深入理解本项目的实现，都能从零看懂。
 >
 > 每个功能都按「**是什么 → 为什么 → 怎么做 → 代码在哪 → 核心逻辑**」的结构讲解。

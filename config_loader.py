@@ -6,7 +6,7 @@
     config["embedding"]["base_url"]
 
 也支持点号路径访问：
-    cfg("embedding.base_url") → "http://10.102.31.129:9997/v1"
+    cfg("embedding.base_url") → "https://api.deepseek.com/v1"
 
 配置文件位置：项目根目录下的 config/config.json。
 启动时若文件不存在，会自动创建一份默认配置。

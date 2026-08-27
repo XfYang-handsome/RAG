@@ -35,7 +35,7 @@
     "milvus": [
       {"name": "本地默认库", "type": "local", "url": "http://localhost:19530",
        "db_name": "default"},
-      {"name": "云端库", "type": "online", "url": "http://10.102.31.129:19531",
+      {"name": "云端库", "type": "online", "url": "http://<your-milvus-host>:19531",
        "token": "...", "db_name": "..."}
     ],
     "current": "本地默认库"
