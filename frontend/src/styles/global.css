@@ -11,10 +11,10 @@
   --text-muted: #6b7280;
   --text-faint: #9ca3af;
   --heading: #1a1a2e;
-  --primary: #6366f1;
-  --primary-hover: #4f46e5;
-  --primary-soft: #f5f3ff;
-  --primary-disabled: #a5b4fc;
+  --primary: #0ea5e9;
+  --primary-hover: #0284c7;
+  --primary-soft: #e0f7ff;
+  --primary-disabled: #7dd3fc;
   --success: #059669;
   --success-soft: #a7f3d0;
   --danger: #dc2626;
@@ -31,12 +31,15 @@
   --header-btn: #374151;
   --header-btn-hover: #4b5563;
   --shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
-  --grad-primary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  --grad-primary-strong: linear-gradient(135deg, #5b54f0 0%, #7c3aed 100%);
+  --grad-primary: linear-gradient(135deg, #38bdf8 0%, #06b6d4 100%);
+  --grad-primary-strong: linear-gradient(135deg, #0ea5e9 0%, #0891b2 100%);
   --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.07);
   --shadow-md: 0 6px 20px rgba(15, 23, 42, 0.1);
   --shadow-lg: 0 20px 60px rgba(15, 23, 42, 0.18);
-  --card-hover: 0 10px 30px rgba(99, 102, 241, 0.14);
+  --card-hover: 0 10px 30px rgba(14, 165, 233, 0.14);
+  --header-grad: linear-gradient(135deg, #082f49 0%, #0c4a6e 55%, #0369a1 130%);
+  --header-glow-a: rgba(56, 189, 248, 0.30);
+  --header-glow-b: rgba(14, 165, 233, 0.24);
 }
 
 [data-theme='dark'] {
@@ -77,6 +80,9 @@
   --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.6);
   --card-hover: 0 10px 30px rgba(99, 102, 241, 0.28);
+  --header-grad: linear-gradient(135deg, #1e1b4b 0%, #2e1065 55%, #4f46e5 130%);
+  --header-glow-a: rgba(129, 140, 248, 0.28);
+  --header-glow-b: rgba(168, 85, 247, 0.24);
 }
 
 /* 跟随系统（未显式指定 data-theme 时） */
@@ -119,6 +125,9 @@
     --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.5);
     --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.6);
     --card-hover: 0 10px 30px rgba(99, 102, 241, 0.28);
+    --header-grad: linear-gradient(135deg, #1e1b4b 0%, #2e1065 55%, #4f46e5 130%);
+    --header-glow-a: rgba(129, 140, 248, 0.28);
+    --header-glow-b: rgba(168, 85, 247, 0.24);
   }
 }
 

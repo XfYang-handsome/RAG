@@ -45,9 +45,9 @@ from fastmcp import FastMCP
 # MCP 服务器实例
 # ============================================================================
 mcp = FastMCP(
-    name="RAG-Service",
+    name="PrismRAG-Service",
     instructions=(
-        "RAG 服务：提供联网搜索（web_search）、圆周率计算（calculate_pi）、"
+        "PrismRAG 服务：提供联网搜索（web_search）、圆周率计算（calculate_pi）、"
         "LaTeX 算式计算（calculate_expression，初等数学）与本地知识库检索"
         "（search_knowledge_base / list_knowledge_documents / get_knowledge_toc）。"
         "知识库检索默认走混合检索（dense + BM25 + RRF），"

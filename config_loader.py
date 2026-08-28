@@ -99,6 +99,18 @@ DEFAULT_CONFIG = {
             "min_evidences": 2
         }
     },
+    "theme": {
+        "light": {
+            "gradient": True,
+            "color1": "#0ea5e9",
+            "color2": "#06b6d4"
+        },
+        "dark": {
+            "gradient": True,
+            "color1": "#6366f1",
+            "color2": "#a855f7"
+        }
+    },
     "system_prompt": "",
     "server": {
         "host": "127.0.0.1",

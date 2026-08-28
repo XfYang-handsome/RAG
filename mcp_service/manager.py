@@ -43,7 +43,7 @@ SERVERS_PATH = os.path.join(BASE_DIR, "config", "mcp_servers.json")
 # 默认服务器配置（首次自动创建）
 # command 为 "-m mcp"（以模块方式启动 mcp/__main__.py），args 为启动参数。
 DEFAULT_SERVER = {
-    "name": "RAG-Service",
+    "name": "PrismRAG-Service",
     "command": "-m",
     "args": "mcp_service --host 127.0.0.1 --port 8765",
     "url": "http://127.0.0.1:8765/mcp",
@@ -722,7 +722,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     from fastapi import FastAPI
-    app = FastAPI(title="RAG MCP Manager")
+    app = FastAPI(title="PrismRAG MCP Manager")
     app.include_router(create_router())
 
     uvicorn.run(app, host=args.host, port=args.port)

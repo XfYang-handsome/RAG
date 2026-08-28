@@ -50,8 +50,8 @@ def _pick_server_name() -> Optional[str]:
     if not servers:
         return None
     for s in servers:
-        if s.get("name") == "RAG-Service":
-            return "RAG-Service"
+        if s.get("name") == "PrismRAG-Service":
+            return "PrismRAG-Service"
     return servers[0].get("name") or None
 
 

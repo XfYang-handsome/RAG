@@ -1,6 +1,6 @@
 """
 ================================================================================
-RAG 知识库系统 — 程序入口
+PrismRAG 知识库系统 — 程序入口
 ================================================================================
 
 启动方式：
@@ -99,7 +99,7 @@ class _ForceExitServer(uvicorn.Server):
 
 def main():
     _svr_cfg = config["server"]
-    p = argparse.ArgumentParser(description="RAG HTTP 服务")
+    p = argparse.ArgumentParser(description="PrismRAG HTTP 服务")
     p.add_argument("--port", type=int, default=_svr_cfg["port"])
     p.add_argument("--host", type=str, default=_svr_cfg["host"])
     p.add_argument("--mcp", action="store_true",
@@ -211,7 +211,7 @@ def main():
             return
         try:
             from mcp_service import manager
-            res = manager.start_server("RAG-Service")
+            res = manager.start_server("PrismRAG-Service")
             print(f"[MCP] {res.get('message', '')}")
         except Exception as e:
             print(f"[MCP] 启动失败: {e}")
@@ -222,7 +222,7 @@ def main():
             return
         try:
             from mcp_service import manager
-            manager.stop_server("RAG-Service")
+            manager.stop_server("PrismRAG-Service")
         except Exception as e:
             print(f"[MCP] 关闭失败: {e}")
 

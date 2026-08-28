@@ -1,7 +1,8 @@
 <script setup>
 import { ref, reactive, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowLeft, Blocks, Plus, RefreshCw } from '@lucide/vue'
+import { ArrowLeft, Plus, RefreshCw } from '@lucide/vue'
+import PrismLogo from '../components/PrismLogo.vue'
 import { useMcpStore } from '../stores/mcp'
 import ServerCard from '../components/mcp/ServerCard.vue'
 
@@ -96,7 +97,7 @@ onUnmounted(() => {
     <!-- 顶栏 -->
     <header class="app-header">
       <button class="header-btn" @click="router.push('/')"><ArrowLeft :size="16" />返回</button>
-      <span class="brand"><span class="logo"><Blocks :size="16" color="#fff" /></span>MCP 管理</span>
+      <span class="brand"><span class="logo"><PrismLogo :size="16" /></span>MCP 管理</span>
       <span class="sub">工具全部注册在 MCP 服务器上 · 每个工具可独立启停</span>
     </header>
 
@@ -141,7 +142,7 @@ onUnmounted(() => {
       <!-- 服务器新增表单 -->
       <div v-if="serverFormVisible" class="form">
         <div class="sec-head"><h2>新增 MCP 服务器</h2></div>
-        <div class="f-row"><label>名称 *</label><input v-model="serverForm.name" placeholder="RAG-Service" /></div>
+        <div class="f-row"><label>名称 *</label><input v-model="serverForm.name" placeholder="PrismRAG-Service" /></div>
         <div class="f-row"><label>启动命令</label><input v-model="serverForm.command" placeholder="-m（留空表示仅连接外部 URL）" /></div>
         <div class="f-row"><label>启动参数</label><input v-model="serverForm.args" placeholder="mcp_service --host 127.0.0.1 --port 8765" /></div>
         <div class="f-row"><label>连接 URL</label><input v-model="serverForm.url" placeholder="http://127.0.0.1:8765/mcp" /></div>
@@ -195,7 +196,7 @@ onUnmounted(() => {
   background: var(--bg);
 }
 .app-header {
-  background: linear-gradient(135deg, var(--header-bg) 0%, #2f2b57 60%, #4338a6 140%);
+  background: var(--header-grad);
   color: var(--header-text);
   height: 60px;
   padding: 0 28px;
@@ -234,7 +235,7 @@ onUnmounted(() => {
   width: 28px;
   height: 28px;
   border-radius: 8px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  background: var(--grad-primary);
   display: flex;
   align-items: center;
   justify-content: center;

@@ -12,10 +12,8 @@ redis/
 /data/
 models/
 
-# ============ eval 运行时产物（评测集 dataset.json 保留入库） ============
-eval/data/runs/
-eval/data/scores/
-eval/data/report.md
+# ============ eval 评测框架（内部工具，不随仓库发布） ============
+eval/
 
 # ============ Frontend ============
 frontend/node_modules/

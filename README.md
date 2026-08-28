@@ -1,4 +1,4 @@
-# RAG 知识库系统 · 使用与实现详解
+# PrismRAG 知识库系统 · 使用与实现详解
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB.svg?logo=python&logoColor=white)](https://www.python.org/)
@@ -227,14 +227,6 @@ RAG/
 │       ├── styles/global.css # 设计令牌（CSS 变量，亮暗主题）
 │       ├── views/            # ChatView.vue（主界面）/ McpView.vue（MCP 管理）
 │       └── components/       # chat/（消息/思考/工作台/引用）+ panel/（右侧面板）+ mcp/
-├── eval/                     # RAG 评测框架（Ragas，独立于主程序，见第 16 章）
-│   ├── config.py             # 组合矩阵 + 指标清单 + judge 模型配置
-│   ├── generate_dataset.py   # 评测集生成（LLM 生成 QA 对）
-│   ├── collect.py            # 组合遍历采集（answer + contexts）
-│   ├── score.py              # Ragas 评分（5 指标，独立 venv 运行）
-│   ├── report.py             # 汇总报告
-│   ├── run_full.py           # 一键编排（生成→采集→评分→报告，自动跨环境 + 断点续跑）
-│   └── data/                 # dataset.json / runs/ / scores/ / report.md
 ├── config/
 │   ├── config.json          # 系统配置
 │   ├── models.json          # 模型配置（llm/tool_llm/summary/embedding/reranker）
@@ -1402,6 +1394,8 @@ python __main__.py --mcp --celery    # 三个服务一起启停
 
 这一节介绍如何**量化评估**本系统的检索质量与生成质量——回答两个核心问题：「检索是不是把该找的都找出来了（召回率）？」「模型有没有一本正经地胡说八道（幻觉）？」。
 
+> **说明**：评测脚本（`eval/` 目录，基于 Ragas 的评测集生成 / 运行采集 / 评分 / 报告工具链）属于内部工具，已移出开源仓库。本节保留评测方法论与指标解读，供自建评测时参考。
+
 ### 16.1 为什么要评测、评什么
 
 RAG 的质量可以拆成两条独立维度，分别对应两类典型问题：
@@ -1686,4 +1680,15 @@ mcp__rag__calculate_expression
 | `common/text_utils.py` | 通用文本工具（健壮 JSON 解析 / CJK 检测 / 查询英化） |
 | `agentic_rag/` | Agentic RAG 子包（多步检索循环） |
 | `mcp_service/` | MCP 服务子包（工具 + 管理 + 桥接） |
-| `eval/` | RAG 评测框架（Ragas，一键编排 run_full.py + 采集 + 评分 + 报告，见第 16 章） |
+
+---
+
+## 更新日志
+
+### 2026-08-28
+
+- **评测模块移出仓库**：`eval/` 目录（Ragas 评测工具链）不再随仓库发布，本地保留；README 第 16 章保留评测方法论说明
+- **生成质量改进**：rag / agentic 两种模式的生成 prompt 增加「完整但简洁」约束（直接回答问题要点，不展开无关背景），修复长答案稀释答案正确性得分的问题（`rag_graph.py`、`agentic_rag/synthesizer.py`）
+- **前端 Logo 更新**：`PrismLogo` 组件由 SVG 三角形改为彩色棱镜图片，favicon 同步更新（`frontend/src/components/PrismLogo.vue`、`frontend/index.html`）
+- **静态资源路由修复**：`server.py` 为前端构建产物根目录的 public 文件（favicon、logo 等）增加显式路由，修复此前 404 导致图标加载失败的问题
+- **模型配置**：移除不可用的内网模型（BGE-M3 / bge-reranker），新增 SiliconFlow `Qwen3-Reranker-8B` 在线重排序并设为当前使用（本地 `config/models.json`，不随仓库发布）

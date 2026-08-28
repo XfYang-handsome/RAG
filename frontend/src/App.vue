@@ -7,13 +7,13 @@ import {
   NDialogProvider,
 } from 'naive-ui'
 import { useThemeStore } from './stores/theme'
-import { lightOverrides, darkOverrides } from './theme'
+import { buildOverrides } from './theme'
 
 const themeStore = useThemeStore()
 themeStore.init()
 
 const naiveTheme = computed(() => (themeStore.isDark ? darkTheme : null))
-const themeOverrides = computed(() => (themeStore.isDark ? darkOverrides : lightOverrides))
+const themeOverrides = computed(() => buildOverrides(themeStore.activePalette, themeStore.isDark))
 </script>
 
 <template>

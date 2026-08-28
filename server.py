@@ -35,7 +35,7 @@ from typing import List, Optional
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException
-from fastapi.responses import StreamingResponse, HTMLResponse, RedirectResponse
+from fastapi.responses import StreamingResponse, HTMLResponse, RedirectResponse, FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -245,7 +245,7 @@ async def lifespan(app: FastAPI):
     主程序直接连接 Milvus 数据库（检索/入库/数据管理/对话历史），
     不依赖 MCP 服务器；MCP 仅用于联网搜索工具（可选）。
     """
-    log("INFO", "RAG 服务启动")
+    log("INFO", "PrismRAG 服务启动")
     # 启动时把上次遗留的「运行中」入库任务标记为中断：无论上次是强杀、崩溃还是
     # 手动关 Worker，任务都可能卡在 PENDING/PARSING 等中间态。统一标记为 FAILED，
     # 前端即可展示「已中断，可重试」，同名文件也不再被 has_running 误判为占用。
@@ -275,7 +275,7 @@ async def lifespan(app: FastAPI):
     # 操作（torch 推理 / LLM 调用）时可能卡住解释器退出，导致主程序退出后
     # 残留 python 进程。用 os._exit 绕过 daemon 线程的优雅退出等待。
     import os as _os
-    log("INFO", "RAG 服务已关闭")
+    log("INFO", "PrismRAG 服务已关闭")
     _os._exit(0)
 
 
@@ -309,7 +309,7 @@ def _warmup_reranker_async():
     t.start()
 
 
-app = FastAPI(title="RAG 知识库", version="4.0", lifespan=lifespan)
+app = FastAPI(title="PrismRAG 知识库", version="4.0", lifespan=lifespan)
 
 # ============================================================================
 # 挂载 MCP 管理路由（/mcp/*：服务器列表 / 启停 / 工具 / 日志 / 开关）
@@ -329,22 +329,41 @@ app.include_router(_create_mcp_router())
 _DIST_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "dist")
 _DIST_INDEX = os.path.join(_DIST_DIR, "index.html")
 _UI_CACHE = None
+_UI_CACHE_MTIME = None
 
 # 挂载构建产物（JS/CSS/字体等）为静态资源
 _DIST_ASSETS = os.path.join(_DIST_DIR, "assets")
 if os.path.isdir(_DIST_ASSETS):
     app.mount("/assets", StaticFiles(directory=_DIST_ASSETS), name="ui-assets")
 
+# dist 根目录的 public 构建产物（favicon、logo 等）。
+# 不能用 mount("/") 或 "/{filename}" 通配——它们注册在此、会抢先拦截
+# 后面注册的顶层 GET 路由（/health、/config 等），这里逐文件字面量注册
+for _pub in ("prism-logo.png", "prism.png", "prism.svg", "favicon.ico", "robots.txt"):
+    _pub_path = os.path.join(_DIST_DIR, _pub)
+
+    def _serve_public(_path=_pub_path):
+        async def handler():
+            if os.path.isfile(_path):
+                return FileResponse(_path)
+            return JSONResponse({"detail": "Not Found"}, status_code=404)
+        return handler
+
+    app.get(f"/{_pub}", include_in_schema=False)(_serve_public())
+
 def _load_ui():
-    global _UI_CACHE
-    if _UI_CACHE is None:
+    """读取前端入口 index.html，文件改动后自动失效缓存（重新构建无需重启服务）。"""
+    global _UI_CACHE, _UI_CACHE_MTIME
+    mtime = os.path.getmtime(_DIST_INDEX)
+    if _UI_CACHE is None or mtime != _UI_CACHE_MTIME:
         with open(_DIST_INDEX, "r", encoding="utf-8") as f:
             _UI_CACHE = f.read()
+        _UI_CACHE_MTIME = mtime
     return _UI_CACHE
 
 @app.get("/")
 async def root():
-    return HTMLResponse(content=_load_ui())
+    return HTMLResponse(content=_load_ui(), headers={"Cache-Control": "no-cache"})
 
 
 # ============================================================================
@@ -950,6 +969,46 @@ async def set_summary_config(body: dict):
         "success": True,
         "enabled": config.get("summary", {}).get("enabled", True),
     }
+
+HEX_RE = __import__("re").compile(r"^#[0-9a-fA-F]{6}$")
+
+# 亮/暗色主题各自的默认配色（对应 config_loader.DEFAULT_CONFIG 的 theme 段）
+LIGHT_DEFAULT = {"gradient": True, "color1": "#0ea5e9", "color2": "#06b6d4"}
+DARK_DEFAULT = {"gradient": True, "color1": "#6366f1", "color2": "#a855f7"}
+
+
+def _normalize_palette(entry: dict, fallback: dict) -> dict:
+    """规范化一条主题配色（单色/渐变），返回安全结构。"""
+    entry = entry or {}
+    gradient = bool(entry.get("gradient", fallback.get("gradient", True)))
+    c1 = str(entry.get("color1") or "").strip().lower() or fallback.get("color1")
+    c2 = str(entry.get("color2") or "").strip().lower()
+    if not HEX_RE.match(c1):
+        c1 = fallback.get("color1", "#6366f1")
+    if not c2 or not HEX_RE.match(c2):
+        c2 = c1 if not gradient else fallback.get("color2", c1)
+    return {"gradient": gradient, "color1": c1.lower(), "color2": c2.lower()}
+
+
+@app.get("/config/theme")
+async def get_theme_config():
+    """获取主题配色配置（亮/暗色各自的单色或双色渐变）。"""
+    theme = config.get("theme", {}) or {}
+    return {
+        "light": _normalize_palette(theme.get("light"), LIGHT_DEFAULT),
+        "dark": _normalize_palette(theme.get("dark"), DARK_DEFAULT),
+    }
+
+
+@app.post("/config/theme")
+async def set_theme_config(body: dict):
+    """保存主题配色配置，持久化到 config/config.json。"""
+    from config_loader import set_config
+    theme = body.get("theme") or {}
+    light = _normalize_palette(theme.get("light"), LIGHT_DEFAULT)
+    dark = _normalize_palette(theme.get("dark"), DARK_DEFAULT)
+    set_config("theme", {"light": light, "dark": dark})
+    return {"success": True, "light": light, "dark": dark}
 
 @app.get("/config/system_prompt")
 async def get_system_prompt():

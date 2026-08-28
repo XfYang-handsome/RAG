@@ -2,8 +2,9 @@
 import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
-  Sparkles, SunMoon, Blocks, Settings2, MessageSquarePlus,
+  SunMoon, Blocks, Settings2, MessageSquarePlus,
 } from '@lucide/vue'
+import PrismLogo from '../components/PrismLogo.vue'
 import { useThemeStore } from '../stores/theme'
 import { useChatStore } from '../stores/chat'
 import { useSettingsStore } from '../stores/settings'
@@ -83,8 +84,8 @@ onUnmounted(() => {
     <!-- 顶栏 -->
     <header class="app-header">
       <div class="header-title">
-        <span class="logo"><Sparkles :size="20" color="#fff" /></span>
-        <h1>RAG 知识库</h1>
+        <span class="logo"><PrismLogo :size="20" /></span>
+        <h1>PrismRAG 知识库</h1>
         <span class="header-sub">检索增强生成 · Agentic</span>
       </div>
       <div class="header-actions">
@@ -115,7 +116,7 @@ onUnmounted(() => {
               <div ref="messagesEl" class="chat-messages">
                 <div v-if="!chat.messages.length" class="welcome">
                   <div class="welcome-orbit">
-                    <span class="welcome-logo"><Sparkles :size="30" color="#fff" /></span>
+                    <span class="welcome-logo"><PrismLogo :size="30" color="#fff" /></span>
                     <span class="orbit-dot d1"></span>
                     <span class="orbit-dot d2"></span>
                     <span class="orbit-dot d3"></span>
@@ -172,7 +173,7 @@ onUnmounted(() => {
 }
 .app-header {
   position: relative;
-  background: linear-gradient(135deg, #1f1b4a 0%, #2f2b57 55%, #4c3fa0 130%);
+  background: var(--header-grad);
   color: var(--header-text);
   padding: 16px 24px;
   display: flex;
@@ -188,8 +189,8 @@ onUnmounted(() => {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(420px 160px at 18% 0%, rgba(139, 92, 246, 0.35), transparent 60%),
-    radial-gradient(360px 140px at 88% 0%, rgba(99, 102, 241, 0.28), transparent 60%);
+    radial-gradient(420px 160px at 18% 0%, var(--header-glow-a), transparent 60%),
+    radial-gradient(360px 140px at 88% 0%, var(--header-glow-b), transparent 60%);
   pointer-events: none;
 }
 .app-header::after {
@@ -229,7 +230,7 @@ onUnmounted(() => {
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  background: var(--grad-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -401,7 +402,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 28px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 8px 28px rgba(14, 165, 233, 0.4);
   position: relative;
   z-index: 2;
   animation: float 4s ease-in-out infinite;

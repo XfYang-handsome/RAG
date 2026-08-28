@@ -27,6 +27,8 @@ export const api = {
   setSummary: (body) => http.post('/config/summary', body),
   getSystemPrompt: () => http.get('/config/system_prompt'),
   setSystemPrompt: (sp) => http.post('/config/system_prompt', { system_prompt: sp }),
+  getTheme: () => http.get('/config/theme'),
+  saveTheme: (theme) => http.post('/config/theme', { theme }),
 
   // ============ 模型 ============
   listModels: () => http.get('/models'),

@@ -1,7 +1,7 @@
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import { NModal, darkTheme } from 'naive-ui'
-import { Settings, Plus, Pencil, Trash2, Check, Database, Search, Cpu } from '@lucide/vue'
+import { Settings, Plus, Pencil, Trash2, Check, Database, Search, Cpu, Palette } from '@lucide/vue'
 import { useSettingsStore } from '../../stores/settings'
 import { useThemeStore } from '../../stores/theme'
 
@@ -146,6 +146,64 @@ const RETRIEVAL_MODES = [
   { value: 'tree', label: '树导航' },
 ]
 
+// ============ 外观（调色盘） ============
+const THEME_MODES = [
+  { value: 'system', label: '跟随系统' },
+  { value: 'light', label: '亮色' },
+  { value: 'dark', label: '暗色' },
+]
+const PALETTE_MODES = [
+  { key: 'light', label: '亮色主题配色' },
+  { key: 'dark', label: '暗色主题配色' },
+]
+const DEFAULT_THEME = {
+  light: { gradient: true, color1: '#0ea5e9', color2: '#06b6d4' },
+  dark: { gradient: true, color1: '#6366f1', color2: '#a855f7' },
+}
+
+// 本地编辑副本，保存时才写回 store 与后端
+const themePalette = reactive({
+  light: { ...DEFAULT_THEME.light },
+  dark: { ...DEFAULT_THEME.dark },
+})
+const savingPalette = ref(false)
+
+function syncPaletteFromStore() {
+  themePalette.light = { ...themeStore.palette.light }
+  themePalette.dark = { ...themeStore.palette.dark }
+}
+watch(() => settings.settingsOpen, (open) => {
+  if (open) syncPaletteFromStore()
+})
+
+function previewStyle(key) {
+  const p = themePalette[key]
+  if (!p) return {}
+  return p.gradient
+    ? { background: `linear-gradient(135deg, ${p.color1} 0%, ${p.color2} 100%)` }
+    : { background: p.color1 }
+}
+
+async function savePalette() {
+  savingPalette.value = true
+  try {
+    await themeStore.savePalette({
+      light: { ...themePalette.light },
+      dark: { ...themePalette.dark },
+    })
+  } catch (e) {
+    alert('保存配色失败: ' + e.message)
+  } finally {
+    savingPalette.value = false
+  }
+}
+
+async function resetPalette() {
+  themePalette.light = { ...DEFAULT_THEME.light }
+  themePalette.dark = { ...DEFAULT_THEME.dark }
+  await savePalette()
+}
+
 function open() {
   settings.settingsOpen = true
 }
@@ -183,6 +241,9 @@ const rerankerLoading = computed(() => settings.reranker.status === 'loading')
         </button>
         <button class="tab-btn" :class="{ active: tab === 'search' }" @click="tab = 'search'">
           <Search :size="14" />检索
+        </button>
+        <button class="tab-btn" :class="{ active: tab === 'appearance' }" @click="tab = 'appearance'">
+          <Palette :size="14" />外观
         </button>
       </div>
 
@@ -250,7 +311,7 @@ const rerankerLoading = computed(() => settings.reranker.status === 'loading')
       </div>
 
       <!-- ============ 检索 Tab ============ -->
-      <div v-else class="tab-body">
+      <div v-else-if="tab === 'search'" class="tab-body">
         <div class="search-group">
           <div class="group-title">检索模式</div>
           <div class="radio-row">
@@ -293,6 +354,69 @@ const rerankerLoading = computed(() => settings.reranker.status === 'loading')
             >{{ rerankerLoading ? '加载中...' : '下载并加载' }}</button>
           </div>
           <div v-if="settings.reranker.message" class="rr-msg">{{ settings.reranker.message }}</div>
+        </div>
+      </div>
+
+      <!-- ============ 外观 Tab ============ -->
+      <div v-else class="tab-body">
+        <div class="search-group">
+          <div class="group-title">主题模式</div>
+          <div class="radio-row">
+            <label v-for="m in THEME_MODES" :key="m.value" class="radio-label">
+              <input
+                type="radio"
+                :value="m.value"
+                :checked="themeStore.mode === m.value"
+                @change="themeStore.setMode(m.value)"
+              />
+              {{ m.label }}
+            </label>
+          </div>
+        </div>
+
+        <div v-for="pm in PALETTE_MODES" :key="pm.key" class="palette-card">
+          <div class="palette-head">
+            <span class="palette-title">{{ pm.label }}</span>
+            <div class="radio-row palette-mode">
+              <label class="radio-label">
+                <input
+                  type="radio"
+                  :name="'grad-' + pm.key"
+                  :checked="themePalette[pm.key].gradient"
+                  @change="themePalette[pm.key].gradient = true"
+                />
+                双色渐变
+              </label>
+              <label class="radio-label">
+                <input
+                  type="radio"
+                  :name="'grad-' + pm.key"
+                  :checked="!themePalette[pm.key].gradient"
+                  @change="themePalette[pm.key].gradient = false"
+                />
+                单色
+              </label>
+            </div>
+          </div>
+
+          <div class="color-fields">
+            <label class="color-field">
+              <input type="color" v-model="themePalette[pm.key].color1" />
+              <span>{{ themePalette[pm.key].color1 }}</span>
+            </label>
+            <label v-if="themePalette[pm.key].gradient" class="color-field">
+              <input type="color" v-model="themePalette[pm.key].color2" />
+              <span>{{ themePalette[pm.key].color2 }}</span>
+            </label>
+          </div>
+          <div class="palette-preview" :style="previewStyle(pm.key)"></div>
+        </div>
+
+        <div class="palette-actions">
+          <button class="cancel-btn" @click="resetPalette">恢复默认</button>
+          <button class="ok-btn" :disabled="savingPalette" @click="savePalette">
+            {{ savingPalette ? '保存中...' : '保存配色' }}
+          </button>
         </div>
       </div>
     </div>
@@ -669,5 +793,66 @@ const rerankerLoading = computed(() => settings.reranker.status === 'loading')
   cursor: pointer;
   background: var(--grad-primary);
   color: #fff;
+}
+
+/* ============ 调色盘 ============ */
+.palette-card {
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 14px;
+  background: var(--panel-bg);
+}
+.palette-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.palette-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.palette-mode {
+  gap: 10px;
+}
+.color-fields {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.color-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.color-field input[type='color'] {
+  width: 36px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+}
+.color-field span {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.palette-preview {
+  height: 26px;
+  border-radius: 8px;
+  margin-top: 10px;
+}
+.palette-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
 }
 </style>

@@ -1,6 +1,6 @@
 [project]
 package-mode = false 
-name = "rag"
+name = "prismrag"
 version = "0.1.0"
 description = ""
 authors = [

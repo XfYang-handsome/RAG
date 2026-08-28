@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-RAG 知识库系统 —— 一键初始化脚本（跨平台：Windows / Linux / macOS）
+PrismRAG 知识库系统 —— 一键初始化脚本（跨平台：Windows / Linux / macOS）
 
 目标：在「全新的电脑」上，除 4 个系统依赖外全部自动完成。
 
@@ -360,7 +360,7 @@ def print_next(force_cpu: bool):
 # ---------------------------------------------------------------------------
 
 def main():
-    p = argparse.ArgumentParser(description="RAG 一键初始化")
+    p = argparse.ArgumentParser(description="PrismRAG 一键初始化")
     p.add_argument("--cpu", action="store_true", help="强制 CPU 版依赖")
     p.add_argument("--gpu", action="store_true", help="强制 GPU 版依赖（cu128）")
     p.add_argument("--restore", action="store_true", help="恢复 pyproject.toml 为 GPU 版")
@@ -377,7 +377,7 @@ def main():
         return
 
     print("=" * 66)
-    print("  RAG 知识库系统 —— 一键初始化")
+    print("  PrismRAG 知识库系统 —— 一键初始化")
     print("=" * 66)
     print(f"  操作系统 : {_OS_NAME}")
     print(f"  Python   : {platform.python_version()}")
